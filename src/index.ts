@@ -105,6 +105,9 @@ const error = (): never => {
 };
 error();
 
+// Object
+// object is a type that represents the non-primitive type, i.e. anything that is not number, string, boolean, bigint, symbol, null, or undefined.
+
 // In TypeScript, there are several places where type inference
 // is used to provide type information when there is no explicit
 // type annotation. For example, in this code
@@ -164,16 +167,29 @@ console.log(char);
 console.log(playerInfo);
 
 // Type Assertions
+// It has no runtime impact and is used purely by the compiler.
+
+// as-syntax
 let strLength: number;
 strLength = 0;
 strLength = (whatever as string).length;
 console.log(strLength);
 
+// angle-bracket syntax
+const someValue = "this is a string";
+const someValueLength = (<string>someValue).length;
+console.log(someValueLength);
+
 // Interface
 interface RobotArmy {
   count: number;
-  type: string;
+  readonly type: string;
   magic?: string; // optional
+  getId?: () => string;
+}
+
+interface RobotNavy extends RobotArmy {
+  owner: string;
 }
 
 // : void is redundant in this case
@@ -189,20 +205,83 @@ const fightRobotArmy2 = (robot: {
   console.log("FIGHT!", robot);
 };
 
-fightRobotArmy({ count: 1, type: "A" });
-fightRobotArmy2({ count: 1, type: "B" });
+const fightRobotNavy = (robot: RobotNavy) => {
+  console.log("FIGHT!", robot);
+};
+
+const myFightRobotArmy: RobotArmy = { count: 1, type: "A" };
+const myFightRobotNavy: RobotNavy = { count: 2, type: "B", owner: "John Doe" };
+class myFightRobot implements RobotArmy {
+  private id: string;
+  public count: number;
+  readonly type: string;
+
+  constructor(id: string, count: number, type: string) {
+    this.id = id;
+    this.count = count;
+    this.type = type;
+  }
+}
+const customFightRobot = new myFightRobot("456436", 0, "C");
+fightRobotArmy(myFightRobotArmy);
+fightRobotArmy2(myFightRobotArmy);
+fightRobotArmy(myFightRobotNavy);
+fightRobotArmy2(myFightRobotNavy);
+fightRobotNavy(myFightRobotNavy);
+fightRobotArmy(customFightRobot);
+fightRobotArmy2({ count: 3, type: "B" });
+
+// Merging interfaces
+
+interface Box {
+  height: number;
+  width: number;
+}
+interface Box {
+  scale: number;
+}
+
+const box: Box = { height: 5, width: 6, scale: 10 };
+console.log(box);
 
 // Classes
 class Animal {
-  private sing: string;
-  constructor(sound: string) {
+  private id: string | number;
+  public name: string;
+  readonly type: string;
+  protected sing: string;
+
+  constructor(id: string | number, name: string, type: string, sound: string) {
+    this.id = id;
+    this.name = name;
+    this.type = type;
     this.sing = sound;
   }
-  greet() {
+
+  public greet(): string {
     return "Hello, " + this.sing;
+  }
+
+  public get getId() {
+    return this.id;
+  }
+
+  public get getSing() {
+    return this.sing;
+  }
+
+  public set setSing(sound: string) {
+    this.sing = sound;
   }
 }
 
-const dog = new Animal("Au");
-// dog.sing
-dog.greet();
+const dog = new Animal(999, "Toby", "A", "Au");
+console.log(dog.getId);
+console.log(dog.getSing);
+console.log(dog.greet());
+dog.setSing = "Auuuuuu";
+console.log(dog.greet());
+
+// You can also extend a class or define a class as an abstract class
+// class myclass extends anotherclass
+// abstract class myclass
