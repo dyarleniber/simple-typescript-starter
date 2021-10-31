@@ -285,3 +285,281 @@ console.log(dog.greet());
 // You can also extend a class or define a class as an abstract class
 // class myclass extends anotherclass
 // abstract class myclass
+
+class UserAccount {
+  public name: string; // public is default
+  protected age: number;
+
+  constructor(name: string, age: number) {
+    this.name = name;
+    this.age = age;
+  }
+
+  logDetails(): void {
+    console.log(`${this.name} is ${this.age} years old.`);
+  }
+}
+
+const john = new UserAccount("John", 30);
+// john.age = 33; // Property 'age' is protected and only accessible within class 'UserAccount' and its subclasses.
+john.logDetails();
+
+class CharAccount extends UserAccount {
+  private nickname: string;
+  readonly level: number;
+
+  constructor(name: string, age: number, nickname: string, level: number) {
+    super(name, age);
+
+    this.nickname = nickname;
+    this.level = level;
+  }
+
+  get getLevel() {
+    console.log("get level");
+    return this.level;
+  }
+
+  set setNickname(nickname: string) {
+    console.log("set nickname");
+    this.nickname = nickname;
+  }
+}
+
+const johnDoe = new CharAccount("John Doe", 30, "j2021", 80);
+// johnDoe.nickname = "new2021"; // Property 'nickname' is private and only accessible within class 'charAccount'.
+// console.log(johnDoe.nickname); // Property 'nickname' is private and only accessible within class 'charAccount'.
+// johnDoe.level = 100; // Cannot assign to 'level' because it is a read-only property.
+console.log(johnDoe.level);
+console.log(johnDoe.getLevel);
+johnDoe.setNickname = "john2021";
+johnDoe.logDetails();
+
+// interfaces
+
+interface Game {
+  title: string;
+  description?: string;
+  readonly genre: string;
+  platform?: string[];
+  getSimilars?: (title: string) => void;
+}
+
+const tlou: Game = {
+  title: "The Last of Us",
+  genre: "Action",
+  platform: ["PS3", "PS4"],
+  getSimilars: (title: string) => {
+    console.log(`Similar games to ${title}: Uncharted, A Plague Tale, Metro.`);
+  },
+};
+
+// tlou.genre = "FPS"; // Cannot assign to 'genre' because it is a read-only property.
+// tlou.getSimilars(tlou.title); // Cannot invoke an object which is possibly 'undefined'.
+if (tlou.getSimilars) {
+  tlou.getSimilars(tlou.title);
+}
+
+interface DLC extends Game {
+  originalGame: Game;
+  newContent: string[];
+}
+
+const leftBehind: DLC = {
+  title: "The Last of Us - Left Behind",
+  genre: "Action",
+  platform: ["PS4"],
+  getSimilars: (title: string) => {
+    console.log(`Similar games to ${title}: Uncharted, A Plague Tale, Metro.`);
+  },
+  originalGame: tlou,
+  newContent: ["new characters"],
+};
+
+console.log(leftBehind);
+
+class CreateGame implements Game {
+  title: string;
+  description?: string;
+  readonly genre: string;
+  getSimilars?: (title: string) => void;
+
+  constructor(title: string, genre: string) {
+    this.title = title;
+    this.genre = genre;
+  }
+}
+
+const tlou2 = new CreateGame("The Last of Us 2", "action");
+console.log(tlou2);
+
+// Difference between interfaces and type alias
+
+// Type Alias has intersection (X & Y)
+// Interface has extends (interface X extends Y, X {})
+
+// Both have implements
+// class X implements typeY {}
+// class X implements interfaceY {}
+
+// Only with type alias is possible to declare primitive types
+// type IDT = string | number;
+// interface ID extends number {} -> Error
+
+// Only type alias can use Tuples
+// type TupleT = [number, number];
+// [1, 2, 3] as TupleT;
+
+// Type Alias allows only 1 declaration per scope
+// type JQueryT = { a: string };
+// type JQueryT = { b: string }; // Duplicate identifier 'JQueryT'.
+// Interface allows more than 1 declaration (and merge all declarations) - monkey patch
+// interface JQuery {
+//   a: string;
+// }
+// interface JQuery {
+//   b: string;
+// }
+// const $: JQuery = {
+//   a: "Foo",
+//   b: "Bar",
+// };
+// Using Interface is very useful for creating extensible packages for example
+
+// Interfaces -> Objects/Classes (OOP)
+// Type Alias -> All other scenarios, Props in React for example
+
+// Generics
+
+function useState() {
+  let state: number;
+  function getState() {
+    return state;
+  }
+  function setState(newState: number) {
+    state = newState;
+  }
+  return { getState, setState };
+}
+const newState = useState();
+newState.setState(123);
+console.log(newState.getState());
+// const newState2 = useState();
+// newState2.setState('Foo'); // Argument of type 'string' is not assignable to parameter of type 'number'.
+// console.log(newState2.getState());
+
+// In order to make possible use a diffent type for each useState creation we should use Generics
+
+// Using union (like let state: number | string) would allow assign a different type after the first assignment
+// for example:
+// newState.setState(123);
+// newState.setState("Foo");
+
+// Using Generics we can ensure that the value of the property state will have only one type,
+// but it is still flexible to define what the type would be
+
+// S can is a "unknown" type by default
+// With "unknown" anything is assignable,
+// but unknown isn't assignable to anything but itself and any without a type assertion or a control flow based narrowing.
+// Likewise, no operations are permitted on an unknown without first asserting or narrowing to a more specific type.
+
+// some common names for this type
+// S => for State type
+// T => for just type
+// K => for Key type
+// V => for Value type
+// E => for Element type
+function useStateWithGenerics<S>() {
+  let state: S;
+  function getState() {
+    return state;
+  }
+  function setState(newState: S) {
+    state = newState;
+  }
+  return { getState, setState };
+}
+const newStateWithGenerics = useStateWithGenerics<string>();
+newStateWithGenerics.setState("Foo");
+console.log(newStateWithGenerics.getState());
+const newStateWithGenerics2 = useStateWithGenerics<number>();
+newStateWithGenerics2.setState(123);
+console.log(newStateWithGenerics2.getState());
+
+// We can also restrict the possible types using Generics
+// Using = string we defined that the string type is the default
+function useStateWithGenerics3<S extends number | string = string>() {
+  let state: S;
+  function getState() {
+    return state;
+  }
+  function setState(newState: S) {
+    state = newState;
+  }
+  return { getState, setState };
+}
+const newStateWithGenerics3 = useStateWithGenerics3();
+newStateWithGenerics3.setState("Foo");
+console.log(newStateWithGenerics3.getState());
+// const newStateWithGenerics4 = useStateWithGenerics3<boolean>(); // Type 'boolean' does not satisfy the constraint 'string | number'.
+// newStateWithGenerics4.setState(true);
+// console.log(newStateWithGenerics4.getState());
+const newStateWithGenerics5 = useStateWithGenerics3<number>();
+newStateWithGenerics5.setState(123);
+console.log(newStateWithGenerics5.getState());
+// const newStateWithGenerics6 = useStateWithGenerics3();
+// newStateWithGenerics6.setState(true); // Argument of type 'boolean' is not assignable to parameter of type 'string'.
+// console.log(newStateWithGenerics6.getState());
+
+// Utility Types
+
+// TypeScript provides several utility types to facilitate common type transformations. These utilities are available globally.
+// Ex: Partial<Type>, Readonly<Type>, Pick<Type, Keys>, Omit<Type, Keys>, etc
+
+// Ex: Partial<Type> = Constructs a type with all properties of Type set to optional.
+interface Todo {
+  title: string;
+  description: string;
+}
+
+function updateTodo(todo: Todo, fieldsToUpdate: Partial<Todo>) {
+  return { ...todo, ...fieldsToUpdate };
+}
+
+const todo1 = {
+  title: "organize desk",
+  description: "clear clutter",
+};
+
+const todo2 = updateTodo(todo1, {
+  description: "throw out trash",
+});
+
+console.log(todo1);
+console.log(todo2);
+
+// Decorators
+// Decorators are an experimental feature
+
+// A Decorator is a special kind of declaration that can be attached to a class declaration, method, accessor, property, or parameter.
+// Decorators use the form @expression, where expression must evaluate to a function that will be called at runtime
+// with information about the decorated declaration.
+// Multiple decorators can be applied to a declaration.
+
+// Decorators provide a way to add annotations and a meta-programming syntax for class declarations and members.
+
+// Class Decorator example
+
+function setAPIVersion(apiVersion: string) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (constructor: any) => {
+    return class extends constructor {
+      version = apiVersion;
+    };
+  };
+}
+
+@setAPIVersion("1.0.0")
+class API {}
+
+console.log(API);
